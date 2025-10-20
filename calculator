@@ -1,0 +1,59 @@
+import java.util.*;
+class Implement{
+    void Addition(int a,int b){
+System.out.println("Answer :"+(a+b));
+
+    }
+    void Subtraction(int a,int b){
+System.out.println("Answer :"+(a-b) );
+    }
+    void Multiplication(int a ,int b){
+System.out.println("Answer :"+(a*b));
+    }
+    void Division(int a ,int b){
+       try{
+System.out.println("Answer :"+(a/b));
+
+       }
+       catch(ArithmeticException e){
+        System.out.println("Error division by zero is not allowed");
+       }
+    }
+}
+class JavaConsoleCalculator{
+    public static void main(String args[]){
+        Implement obj=new Implement();
+        Scanner sc=new Scanner(System.in);
+        System.out.println("Enter two numbers ");
+        int a=sc.nextInt();
+        int b=sc.nextInt();
+        while(true){
+            System.out.println("Enter your choice");
+            System.out.println("1.Addition\n2.Subtraction\n3.Multiplication\n4.Division\n5.Exit\n");
+            int c=sc.nextInt();
+            switch(c){
+                case 1:
+                 obj.Addition(a,b);
+                 break;
+                case 2:
+                obj.Subtraction(a,b);
+                break;
+                case 3:
+                obj.Multiplication(a,b);
+                break;
+                case 4:
+                obj.Division(a,b);
+                break;
+                case 5:
+                System.out.println("Exiting...");
+                sc.close();
+                return;
+                default:
+                System.out.println("Invalid Choice");
+            }
+        }
+
+
+
+    }
+}
