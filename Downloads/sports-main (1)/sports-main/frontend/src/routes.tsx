@@ -1,0 +1,190 @@
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuthStore } from './store/authStore';
+import type { UserRole } from './store/authStore';
+import { useMemo } from 'react';
+
+// Layouts
+import { DashboardLayout } from './components/layout/DashboardLayout';
+
+// Pages
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
+import PlayerDashboard from './pages/PlayerDashboard';
+import CoachDashboard from './pages/CoachDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import UploadPage from './pages/UploadPage';
+import HighlightsPage from './pages/HighlightsPage';
+import VideoDetailPage from './pages/VideoDetailPage';
+import RequestsPage from './pages/RequestsPage';
+import ProfilePage from './pages/ProfilePage';
+import PlayerStatsPage from './pages/PlayerStatsPage';
+import MatchesPage from './pages/MatchesPage';
+import NotificationsPage from './pages/NotificationsPage';
+
+// ================= AUTH INITIALIZER =================
+let authInitialized = false;
+
+function initializeAuthOnce() {
+  if (authInitialized) return;
+  authInitialized = true;
+
+  const token = localStorage.getItem('access_token');
+  const userProfile = localStorage.getItem('user_profile');
+
+  if (token && userProfile) {
+    try {
+      const user = JSON.parse(userProfile);
+      useAuthStore.setState({
+        token,
+        isAuthenticated: true,
+        user,
+      });
+      console.log('[Auth] Initialized from localStorage:', { userRole: user?.role });
+    } catch (e) {
+      console.error('[Auth] Failed to parse user profile:', e);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_profile');
+    }
+  }
+}
+
+// Initialize immediately
+initializeAuthOnce();
+
+// ================= PROTECTED ROUTE =================
+function ProtectedRoute() {
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const shouldRedirect = useMemo(() => !isAuthenticated, [isAuthenticated]);
+
+  if (shouldRedirect) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <Outlet />;
+}
+
+// ================= ROLE GUARD =================
+interface RoleGuardProps {
+  allowedRoles: UserRole[];
+  fallbackPath?: string;
+}
+
+function RoleGuard({ allowedRoles, fallbackPath = '/player' }: RoleGuardProps) {
+  const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  return <Outlet />;
+}
+
+// ================= GUEST ROUTE =================
+function GuestRoute() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+
+  if (isAuthenticated && user) {
+    const targetPath =
+      user.role === 'ADMIN'
+        ? '/admin'
+        : user.role === 'COACH'
+          ? '/coach'
+          : '/player';
+
+    return <Navigate to={targetPath} replace />;
+  }
+
+  return <Outlet />;
+}
+
+// ================= DASHBOARD REDIRECT =================
+function DashboardRedirect() {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const targetPath =
+    user.role === 'ADMIN'
+      ? '/admin'
+      : user.role === 'COACH'
+        ? '/coach'
+        : '/player';
+
+  return <Navigate to={targetPath} replace />;
+}
+
+// ================= APP ROUTER =================
+export default function AppRouter() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Guest only */}
+        <Route element={<GuestRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
+
+        {/* Dashboard redirect */}
+        <Route path="/dashboard" element={<DashboardRedirect />} />
+
+        {/* Authenticated users */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/library" element={<HighlightsPage />} />
+            <Route path="/video/:videoId" element={<VideoDetailPage />} />
+            <Route path="/requests" element={<RequestsPage />} />
+            <Route path="/settings" element={<ProfilePage />} />
+            <Route path="/player" element={<PlayerDashboard />} />
+            <Route path="/stats" element={<PlayerStatsPage />} />
+            <Route path="/matches" element={<MatchesPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+          </Route>
+        </Route>
+
+        {/* Coach */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RoleGuard allowedRoles={['COACH', 'ADMIN']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/coach" element={<CoachDashboard />} />
+              <Route path="/coach/upload" element={<UploadPage />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Admin */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/upload" element={<UploadPage />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Legacy */}
+        <Route path="/highlights" element={<Navigate to="/library" replace />} />
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export { ProtectedRoute, RoleGuard, GuestRoute, DashboardRedirect };
