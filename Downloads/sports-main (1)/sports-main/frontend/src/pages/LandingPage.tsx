@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -180,6 +181,8 @@ function StepCard({ idx, icon, title, desc }: StepCardProps) {
 }
 
 export default function LandingPage() {
+  const { theme, toggleTheme } = useTheme();
+  
   const sports = useMemo(
     () => [
       { id: 'cricket', name: 'Cricket', icon: '🏏', highlight: 'Cover Drive', tip: 'Earlier bat lift for better timing' },
@@ -328,6 +331,17 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-xl glass border border-white/20 hover:bg-white/10 transition-all duration-300 flex items-center justify-center group"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              <i className={`${theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon'} text-sm text-white/70 group-hover:text-white transition-colors`}></i>
+            </motion.button>
+            
             <Link
               to="/login"
               className="hidden sm:block px-4 py-2 rounded-xl glass border border-white/20 hover:bg-white/10 transition-all duration-300 text-sm"

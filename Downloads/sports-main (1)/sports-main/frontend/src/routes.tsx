@@ -21,6 +21,7 @@ import ProfilePage from './pages/ProfilePage';
 import PlayerStatsPage from './pages/PlayerStatsPage';
 import MatchesPage from './pages/MatchesPage';
 import NotificationsPage from './pages/NotificationsPage';
+import ThemeTogglePage from './pages/ThemeTogglePage';
 
 // ================= AUTH INITIALIZER =================
 let authInitialized = false;
@@ -132,6 +133,7 @@ export default function AppRouter() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/theme-test" element={<ThemeTogglePage />} />
 
         {/* Guest only */}
         <Route element={<GuestRoute />}>

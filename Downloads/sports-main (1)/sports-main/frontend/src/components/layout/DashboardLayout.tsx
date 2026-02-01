@@ -3,7 +3,6 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 import { useTheme } from "../../hooks/useTheme";
-import { ThemeToggle } from "../ui/ThemeToggle";
 
 // Navigation items configuration
 interface NavItem {
@@ -25,6 +24,7 @@ const dashboardItems: Record<string, NavItem[]> = {
     { to: "/matches", icon: "fas fa-calendar", label: "Matches" },
     { to: "/notifications", icon: "fas fa-bell", label: "Notifications" },
     { to: "/settings", icon: "fas fa-cog", label: "Settings" },
+    { to: "#theme", icon: "fas fa-moon", label: "Dark Mode" },
   ],
   COACH: [
     { to: "/coach", icon: "fas fa-home", label: "Dashboard" },
@@ -33,6 +33,7 @@ const dashboardItems: Record<string, NavItem[]> = {
     { to: "/library", icon: "fas fa-video", label: "Library" },
     { to: "/requests", icon: "fas fa-comment-dots", label: "Requests" },
     { to: "/settings", icon: "fas fa-cog", label: "Settings" },
+    { to: "#theme", icon: "fas fa-moon", label: "Dark Mode" },
   ],
   ADMIN: [
     { to: "/admin", icon: "fas fa-home", label: "Dashboard" },
@@ -41,6 +42,7 @@ const dashboardItems: Record<string, NavItem[]> = {
     { to: "/library", icon: "fas fa-video", label: "Library" },
     { to: "/requests", icon: "fas fa-comment-dots", label: "Requests" },
     { to: "/settings", icon: "fas fa-cog", label: "Settings" },
+    { to: "#theme", icon: "fas fa-moon", label: "Dark Mode" },
   ],
 };
 
@@ -50,7 +52,6 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [toast, setToast] = React.useState<{message: string, type: 'success' | 'error'} | null>(null);
@@ -176,6 +177,36 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   </div>
                 </div>
               </motion.div>
+              
+              {/* TEST THEME BUTTON */}
+              <div className="mt-3">
+                <div 
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: '#ff0000',
+                    color: 'white',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                  onClick={() => {
+                    alert('Theme toggle clicked!');
+                    const html = document.documentElement;
+                    if (html.classList.contains('dark')) {
+                      html.classList.remove('dark');
+                      html.classList.add('light');
+                    } else {
+                      html.classList.remove('light');
+                      html.classList.add('dark');
+                    }
+                  }}
+                >
+                  🌙 TOGGLE THEME
+                </div>
+              </div>
             </div>
 
             {/* Navigation */}
@@ -190,7 +221,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <NavLink
                     to={item.to}
                     end={item.label === "Dashboard"}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={(e) => {
+                      if (item.to === "#theme") {
+                        e.preventDefault();
+                        const html = document.documentElement;
+                        if (html.classList.contains('dark')) {
+                          html.classList.remove('dark');
+                          html.classList.add('light');
+                          localStorage.setItem('theme', 'light');
+                        } else {
+                          html.classList.remove('light');
+                          html.classList.add('dark');
+                          localStorage.setItem('theme', 'dark');
+                        }
+                      } else {
+                        setSidebarOpen(false);
+                      }
+                    }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
                         ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-white/20"
@@ -219,14 +266,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </motion.div>
               ))}
               
-              {/* Theme Toggle */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: navItems.length * 0.1 }}
+              {/* Theme Toggle Button */}
+              <button
+                onClick={() => {
+                  const html = document.documentElement;
+                  if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                    localStorage.setItem('theme', 'light');
+                  } else {
+                    html.classList.remove('light');
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-white/60 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-300 group w-full border border-transparent"
               >
-                <ThemeToggle />
-              </motion.div>
+                <div className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-white/10 group-hover:bg-gray-300 dark:group-hover:bg-white/20 flex items-center justify-center transition-all duration-300">
+                  <i className="fas fa-moon text-sm text-gray-600 dark:text-white/60 group-hover:text-gray-800 dark:group-hover:text-white"></i>
+                </div>
+                <span className="font-medium">Dark Mode</span>
+              </button>
             </nav>
 
             {/* Logout */}
@@ -328,9 +388,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                     </NavLink>
                   ))}
                   
-                  {/* Mobile Theme Toggle */}
+                  {/* Mobile Theme Toggle - Debug Version */}
                   <div className="mt-4">
-                    <ThemeToggle />
+                    <button
+                      onClick={() => {
+                        const html = document.documentElement;
+                        if (html.classList.contains('dark')) {
+                          html.classList.remove('dark');
+                          html.classList.add('light');
+                          localStorage.setItem('theme', 'light');
+                        } else {
+                          html.classList.remove('light');
+                          html.classList.add('dark');
+                          localStorage.setItem('theme', 'dark');
+                        }
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300 w-full"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+                        <i className="fas fa-moon text-sm text-white/60"></i>
+                      </div>
+                      <span className="font-medium">Toggle Theme</span>
+                    </button>
                   </div>
                 </nav>
 
